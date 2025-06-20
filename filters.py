@@ -1,7 +1,7 @@
 from aiogram import BaseMiddleware
 from aiogram.types import Message
-from app.db import get_user
-from app.config import Config
+from db import get_user
+from config import Config
 
 class WhitelistMiddleware(BaseMiddleware):
     async def __call__(self, handler, event, data):
