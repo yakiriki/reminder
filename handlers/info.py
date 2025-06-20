@@ -2,7 +2,9 @@ from aiogram import Router, types
 
 router = Router()
 
-@router.message(commands=["info"])
+from aiogram.filters import Command
+
+@router.message(Command("info"))
 async def cmd_info(message: types.Message):
     text = (
         "Справка по командам:\n"
