@@ -2,11 +2,11 @@ import asyncio
 from aiogram import Bot, Dispatcher
 from aiogram.types import BotCommand
 from aiogram.fsm.storage.memory import MemoryStorage
-from app.config import Config
-from app.filters import WhitelistMiddleware
-from app.scheduler import reminder_scheduler
+from config import Config
+from filters import WhitelistMiddleware
+from scheduler import reminder_scheduler
 
-from app.handlers import start, info, reminder, screenshots, report, admin, errors
+from handlers import start, info, reminder, screenshots, report, admin, errors
 
 async def on_startup(bot):
     commands = [
