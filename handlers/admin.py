@@ -1,6 +1,6 @@
 from aiogram import Router, types
-from app.db import add_user, remove_user, list_users, get_stats
-from app.config import Config
+from db import add_user, remove_user, list_users, get_stats
+from config import Config
 
 router = Router()
 
