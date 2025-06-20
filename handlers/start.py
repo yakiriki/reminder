@@ -2,7 +2,9 @@ from aiogram import Router, types
 
 router = Router()
 
-@router.message(commands=["start"])
+from aiogram.filters import Command
+
+@router.message(Command("start"))
 async def cmd_start(message: types.Message):
     text = (
         "👋 Привет! Это бот для напоминаний и отправки скринов.\n\n"
