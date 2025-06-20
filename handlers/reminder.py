@@ -1,5 +1,5 @@
 from aiogram import Router, types
-from app.db import create_reminder, get_reminders, update_reminder, delete_reminder
+from db import create_reminder, get_reminders, update_reminder, delete_reminder
 from aiogram.filters import Command
 
 router = Router()
