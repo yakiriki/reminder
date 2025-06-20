@@ -1,8 +1,8 @@
 import asyncio
 from datetime import datetime, timedelta
 from aiogram import Bot
-from app.db import get_reminders, update_reminder
-from app.config import Config
+from db import get_reminders, update_reminder
+from config import Config
 
 async def reminder_scheduler(bot: Bot):
     while True:
