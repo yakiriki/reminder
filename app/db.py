@@ -1,102 +1,124 @@
-from supabase import create_client, Client
+import asyncpg
 from app.config import Config
 import datetime
+import aiohttp
+import base64
 
-supabase: Client = create_client(Config.SUPABASE_URL, Config.SUPABASE_KEY)
+# ----- DB UTILS -----
 
-# USERS
+async def get_db():
+    return await asyncpg.create_pool(Config.SUPABASE_DB_URL)
 
-def get_user(user_id):
-    data = supabase.table("users").select("*").eq("user_id", user_id).execute()
-    return data.data[0] if data.data else None
+# ----- USERS -----
 
-def add_user(user_id, username, is_admin=False):
-    return supabase.table("users").insert({
-        "user_id": user_id,
-        "username": username,
-        "is_admin": is_admin
-    }).execute()
+async def get_user(pool, user_id):
+    async with pool.acquire() as conn:
+        row = await conn.fetchrow("SELECT * FROM users WHERE user_id=$1", user_id)
+        return dict(row) if row else None
 
-def remove_user(user_id):
-    return supabase.table("users").delete().eq("user_id", user_id).execute()
+async def add_user(pool, user_id, username, is_admin=False):
+    async with pool.acquire() as conn:
+        await conn.execute(
+            "INSERT INTO users (user_id, username, is_admin) VALUES ($1, $2, $3) ON CONFLICT (user_id) DO NOTHING",
+            user_id, username, is_admin
+        )
 
-def list_users():
-    return supabase.table("users").select("*").execute().data
+async def remove_user(pool, user_id):
+    async with pool.acquire() as conn:
+        await conn.execute("DELETE FROM users WHERE user_id=$1", user_id)
 
-# REMINDERS
+async def list_users(pool):
+    async with pool.acquire() as conn:
+        rows = await conn.fetch("SELECT * FROM users ORDER BY user_id")
+        return [dict(row) for row in rows]
 
-def create_reminder(user_id, type, time, date=None, days_of_week=None, interval_min=1, active=True):
-    return supabase.table("reminders").insert({
-        "user_id": user_id,
-        "type": type,
-        "time": time,
-        "date": date,
-        "days_of_week": days_of_week,
-        "interval_min": interval_min,
-        "active": active
-    }).execute()
+# ----- REMINDERS -----
 
-def get_reminders(user_id=None):
-    q = supabase.table("reminders").select("*")
-    if user_id:
-        q = q.eq("user_id", user_id)
-    return q.execute().data
+async def create_reminder(pool, user_id, typ, time, date=None, days_of_week=None, interval_min=1, active=True):
+    async with pool.acquire() as conn:
+        await conn.execute(
+            """INSERT INTO reminders (user_id, type, time, date, days_of_week, interval_min, active)
+               VALUES ($1, $2, $3, $4, $5, $6, $7)""",
+            user_id, typ, time, date, days_of_week, interval_min, active
+        )
 
-def update_reminder(reminder_id, **fields):
-    return supabase.table("reminders").update(fields).eq("id", reminder_id).execute()
+async def get_reminders(pool, user_id=None):
+    async with pool.acquire() as conn:
+        if user_id:
+            rows = await conn.fetch("SELECT * FROM reminders WHERE user_id=$1", user_id)
+        else:
+            rows = await conn.fetch("SELECT * FROM reminders")
+        return [dict(row) for row in rows]
 
-def delete_reminder(reminder_id):
-    return supabase.table("reminders").delete().eq("id", reminder_id).execute()
+async def update_reminder(pool, reminder_id, **fields):
+    keys, values = zip(*fields.items())
+    set_str = ', '.join([f"{k}=${i+2}" for i, k in enumerate(keys)])
+    sql = f"UPDATE reminders SET {set_str} WHERE id=$1"
+    async with pool.acquire() as conn:
+        await conn.execute(sql, reminder_id, *values)
 
-# SCREENSHOTS
+async def delete_reminder(pool, reminder_id):
+    async with pool.acquire() as conn:
+        await conn.execute("DELETE FROM reminders WHERE id=$1", reminder_id)
 
-def add_screenshot(user_id, file_url):
-    return supabase.table("screenshots").insert({
-        "user_id": user_id,
-        "file_url": file_url,
-        "added_at": datetime.datetime.utcnow().isoformat()
-    }).execute()
+# ----- SCREENSHOTS -----
 
-def get_screenshots(user_id=None, date_from=None, date_to=None):
-    q = supabase.table("screenshots").select("*")
-    if user_id:
-        q = q.eq("user_id", user_id)
-    if date_from:
-        q = q.gte("added_at", date_from)
-    if date_to:
-        q = q.lte("added_at", date_to)
-    q = q.order("added_at", desc=False)
-    return q.execute().data
+async def add_screenshot(pool, user_id, file_url):
+    async with pool.acquire() as conn:
+        await conn.execute(
+            "INSERT INTO screenshots (user_id, file_url, added_at) VALUES ($1, $2, $3)",
+            user_id, file_url, datetime.datetime.utcnow()
+        )
 
-# REMINDER RESPONSES
+async def get_screenshots(pool, user_id=None, date_from=None, date_to=None):
+    async with pool.acquire() as conn:
+        sql = "SELECT * FROM screenshots WHERE 1=1"
+        params = []
+        if user_id:
+            sql += " AND user_id=$" + str(len(params) + 1)
+            params.append(user_id)
+        if date_from:
+            sql += " AND added_at>=$" + str(len(params) + 1)
+            params.append(date_from)
+        if date_to:
+            sql += " AND added_at<=$" + str(len(params) + 1)
+            params.append(date_to)
+        sql += " ORDER BY added_at"
+        rows = await conn.fetch(sql, *params)
+        return [dict(row) for row in rows]
 
-def add_reminder_response(reminder_id, user_id, screenshot_id=None):
-    return supabase.table("reminder_responses").insert({
-        "reminder_id": reminder_id,
-        "user_id": user_id,
-        "screenshot_id": screenshot_id,
-        "replied_at": datetime.datetime.utcnow().isoformat()
-    }).execute()
+# ----- REMINDER RESPONSES -----
 
-def get_stats():
-    screenshots = supabase.table("screenshots").select("id").execute().data
-    reminders = supabase.table("reminders").select("id").execute().data
-    responses = supabase.table("reminder_responses").select("id").execute().data
-    return {
-        "screenshots": len(screenshots),
-        "reminders": len(reminders),
-        "responses": len(responses),
+async def add_reminder_response(pool, reminder_id, user_id, screenshot_id=None):
+    async with pool.acquire() as conn:
+        await conn.execute(
+            "INSERT INTO reminder_responses (reminder_id, user_id, screenshot_id, replied_at) VALUES ($1, $2, $3, $4)",
+            reminder_id, user_id, screenshot_id, datetime.datetime.utcnow()
+        )
+
+async def get_stats(pool):
+    async with pool.acquire() as conn:
+        screenshots = await conn.fetchval("SELECT COUNT(*) FROM screenshots")
+        reminders = await conn.fetchval("SELECT COUNT(*) FROM reminders")
+        responses = await conn.fetchval("SELECT COUNT(*) FROM reminder_responses")
+        return {
+            "screenshots": screenshots,
+            "reminders": reminders,
+            "responses": responses
+        }
+
+# ----- SUPABASE STORAGE -----
+
+async def upload_file(file_bytes, filename):
+    url = f"{Config.SUPABASE_URL}/storage/v1/object/{Config.SUPABASE_BUCKET}/{filename}"
+    headers = {
+        "apikey": Config.SUPABASE_KEY,
+        "Authorization": f"Bearer {Config.SUPABASE_KEY}",
+        "Content-Type": "application/octet-stream"
     }
-
-# STORAGE
-
-def upload_file(file_bytes, filename):
-    storage = supabase.storage()
-    bucket = storage.from_(Config.SUPABASE_BUCKET)
-    # filename should be unique (add datetime/user etc)
-    path = f"{datetime.datetime.utcnow().strftime('%Y/%m/%d')}/{filename}"
-    res = bucket.upload(path, file_bytes, {"content-type": "image/png"})
-    if res and res.status_code in (200, 201):
-        public_url = bucket.get_public_url(path)
-        return public_url
-    return None
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url, headers=headers, data=file_bytes) as resp:
+            if resp.status in (200, 201):
+                return f"{Config.SUPABASE_URL}/storage/v1/object/public/{Config.SUPABASE_BUCKET}/{filename}"
+            else:
+                return None
