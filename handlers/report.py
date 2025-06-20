@@ -1,6 +1,6 @@
 from aiogram import Router, types
 from datetime import datetime, timedelta
-from app.db import get_screenshots
+from db import get_screenshots
 
 router = Router()
 
