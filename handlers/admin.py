@@ -4,7 +4,9 @@ from app.config import Config
 
 router = Router()
 
-@router.message(commands=["adduser"])
+from aiogram.filters import Command
+
+@router.message(Command("adduser"))
 async def add_user_cmd(message: types.Message):
     if message.from_user.id != Config.ADMIN_USER_ID:
         await message.answer("Только админ может добавлять пользователей.")
@@ -14,7 +16,7 @@ async def add_user_cmd(message: types.Message):
     except Exception as e:
         await message.answer(f"Ошибка: {e}")
 
-@router.message(commands=["removeuser"])
+@router.message(Command("removeuser"))
 async def remove_user_cmd(message: types.Message):
     if message.from_user.id != Config.ADMIN_USER_ID:
         await message.answer("Только админ может удалять пользователей.")
@@ -35,7 +37,7 @@ async def handle_add_remove(message: types.Message):
     except Exception as e:
         await message.answer(f"Ошибка: {e}")
 
-@router.message(commands=["listusers"])
+@router.message(Command("listusers"))
 async def list_users_cmd(message: types.Message):
     users = list_users()
     if not users:
@@ -46,7 +48,7 @@ async def list_users_cmd(message: types.Message):
         txt += f"- {u['user_id']} ({u['username']}) {'[admin]' if u['is_admin'] else ''}\n"
     await message.answer(txt)
 
-@router.message(commands=["debug"])
+@router.message(Command("debug"))
 async def debug_cmd(message: types.Message):
     stats = get_stats()
     await message.answer(
