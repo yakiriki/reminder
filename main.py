@@ -1,3 +1,9 @@
+import httpx
+import gotrue
+import supabase
+print("HTTPX VERSION:", httpx.__version__)
+print("GOTRUE VERSION:", gotrue.__version__)
+print("SUPABASE VERSION:", supabase.__version__)
 import asyncio
 from aiogram import Bot, Dispatcher
 from aiogram.types import BotCommand
