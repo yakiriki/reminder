@@ -1,5 +1,5 @@
 from aiogram import Router, types
-from app.db import upload_file, add_screenshot
+from db import upload_file, add_screenshot
 
 router = Router()
 
