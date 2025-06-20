@@ -1,5 +1,5 @@
 from supabase import create_client, Client
-from app.config import Config
+from config import Config
 import datetime
 
 supabase: Client = create_client(Config.SUPABASE_URL, Config.SUPABASE_KEY)
