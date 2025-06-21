@@ -1,6 +1,6 @@
 from aiogram import Router, types
 from aiogram.filters import Command
-from db import create_reminder, get_reminders, update_reminder, delete_reminder
+from db import create_reminder, delete_reminder
 
 router = Router()
 
@@ -17,18 +17,6 @@ async def reminder_add_help(message: types.Message):
         "- /reminder_add date 14:15 2025-06-21"
     )
 
-@router.message(Command("reminder_edit"))
-async def reminder_edit(message: types.Message):
-    await message.answer("Редактирование напоминаний не реализовано (удалите через /reminder_delete и добавьте заново через /reminder_add).")
-
-@router.message(Command("reminder_delete"))
-async def reminder_delete_help(message: types.Message):
-    await message.answer(
-        "Удалить напоминание:\n"
-        "Формат: /reminder_delete <id>\n"
-        "Пример: /reminder_delete 2"
-    )
-
 @router.message(lambda m: m.text and m.text.startswith("/reminder_add "))
 async def handle_reminder_add(message: types.Message):
     try:
@@ -39,6 +27,7 @@ async def handle_reminder_add(message: types.Message):
         user_id = message.from_user.id
 
         if typ.lower() == "weekly":
+            # days_of_week — строка вида 0,2,4
             days_of_week = [d.strip() for d in param.split(',')]
             create_reminder(
                 user_id=user_id,
@@ -65,6 +54,14 @@ async def handle_reminder_add(message: types.Message):
     except Exception as e:
         await message.answer(f"Ошибка: {e}\nПример: /reminder_add weekly 10:00 0,2,4")
 
+@router.message(Command("reminder_delete"))
+async def reminder_delete_help(message: types.Message):
+    await message.answer(
+        "Удалить напоминание:\n"
+        "Формат: /reminder_delete <id>\n"
+        "Пример: /reminder_delete 2"
+    )
+
 @router.message(lambda m: m.text and m.text.startswith("/reminder_delete "))
 async def handle_reminder_delete(message: types.Message):
     try:
@@ -73,3 +70,7 @@ async def handle_reminder_delete(message: types.Message):
         await message.answer("✅ Напоминание удалено!")
     except Exception as e:
         await message.answer(f"Ошибка: {e}\nПример: /reminder_delete 2")
+
+@router.message(Command("reminder_edit"))
+async def reminder_edit(message: types.Message):
+    await message.answer("Редактирование напоминаний не реализовано (удалите через /reminder_delete и добавьте заново через /reminder_add).")
