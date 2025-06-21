@@ -4,19 +4,6 @@ from db import create_reminder, delete_reminder
 
 router = Router()
 
-@router.message(Command("reminder_add"))
-async def reminder_add_help(message: types.Message):
-    await message.answer(
-        "Добавить напоминание:\n"
-        "Формат: /reminder_add <тип> <время(HH:MM)> <дни недели через запятую (0=Пн,..6=Вс)> или дата(YYYY-MM-DD)\n"
-        "Типы:\n"
-        "- weekly — по дням недели (например: 0,2,4)\n"
-        "- date — по конкретной дате (например: 2025-06-21)\n"
-        "Примеры:\n"
-        "- /reminder_add weekly 10:00 1,3,5\n"
-        "- /reminder_add date 14:15 2025-06-21"
-    )
-
 @router.message(lambda m: m.text and m.text.startswith("/reminder_add "))
 async def handle_reminder_add(message: types.Message):
     try:
@@ -27,7 +14,6 @@ async def handle_reminder_add(message: types.Message):
         user_id = message.from_user.id
 
         if typ.lower() == "weekly":
-            # days_of_week — строка вида 0,2,4
             days_of_week = [d.strip() for d in param.split(',')]
             create_reminder(
                 user_id=user_id,
@@ -37,7 +23,6 @@ async def handle_reminder_add(message: types.Message):
             )
             await message.answer("✅ Еженедельное напоминание добавлено!")
         elif typ.lower() == "date":
-            # param — дата вида YYYY-MM-DD
             create_reminder(
                 user_id=user_id,
                 type=typ,
@@ -53,6 +38,19 @@ async def handle_reminder_add(message: types.Message):
             )
     except Exception as e:
         await message.answer(f"Ошибка: {e}\nПример: /reminder_add weekly 10:00 0,2,4")
+
+@router.message(Command("reminder_add"))
+async def reminder_add_help(message: types.Message):
+    await message.answer(
+        "Добавить напоминание:\n"
+        "Формат: /reminder_add <тип> <время(HH:MM)> <дни недели через запятую (0=Пн,..6=Вс)> или дата(YYYY-MM-DD)\n"
+        "Типы:\n"
+        "- weekly — по дням недели (например: 0,2,4)\n"
+        "- date — по конкретной дате (например: 2025-06-21)\n"
+        "Примеры:\n"
+        "- /reminder_add weekly 10:00 1,3,5\n"
+        "- /reminder_add date 14:15 2025-06-21"
+    )
 
 @router.message(Command("reminder_delete"))
 async def reminder_delete_help(message: types.Message):
