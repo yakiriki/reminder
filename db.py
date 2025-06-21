@@ -16,6 +16,9 @@ def add_user(user_id, username, is_admin=False):
         "username": username,
         "is_admin": is_admin
     }).execute()
+    def confirm_reminder(reminder_id):
+    # Отметить напоминание как подтверждённое
+    supabase.table("reminders").update({"confirmed": True}).eq("id", reminder_id).execute()
 
 def remove_user(user_id):
     return supabase.table("users").delete().eq("user_id", user_id).execute()
