@@ -1,5 +1,5 @@
 from aiogram import Router, types
-from db import upload_file, add_screenshot
+from db import upload_file, add_screenshot, get_reminders_by_user, confirm_reminder
 
 router = Router()
 
@@ -16,7 +16,7 @@ async def handle_photo(message: types.Message):
     else:
         await message.answer("Ошибка загрузки скриншота.")
 
-@router.message(lambda m: m.document and m.document.mime_type.startswith("image/"))
+@router.message(lambda m: m.document and m.document.mime_type and m.document.mime_type.startswith("image/"))
 async def handle_image_doc(message: types.Message):
     file = await message.bot.get_file(message.document.file_id)
     file_bytes = await message.bot.download_file(file.file_path)
@@ -27,13 +27,9 @@ async def handle_image_doc(message: types.Message):
         await message.answer(f"✅ Скриншот сохранён!\n[Посмотреть]({public_url})", parse_mode="Markdown")
     else:
         await message.answer("Ошибка загрузки скриншота.")
-        from db import get_reminders_by_user, confirm_reminder
-from aiogram import Router
-
-router = Router()
 
 @router.message()
-async def any_message(message):
+async def any_message(message: types.Message):
     reminders = get_reminders_by_user(message.from_user.id)
     for rem in reminders:
         if not rem.get("confirmed", False):
