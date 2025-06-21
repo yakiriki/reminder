@@ -16,9 +16,6 @@ def add_user(user_id, username, is_admin=False):
         "username": username,
         "is_admin": is_admin
     }).execute()
-    def confirm_reminder(reminder_id):
-    # Отметить напоминание как подтверждённое
-    supabase.table("reminders").update({"confirmed": True}).eq("id", reminder_id).execute()
 
 def remove_user(user_id):
     return supabase.table("users").delete().eq("user_id", user_id).execute()
@@ -28,7 +25,7 @@ def list_users():
 
 # REMINDERS
 
-def create_reminder(user_id, type, time, date=None, days_of_week=None, interval_min=1, active=True):
+def create_reminder(user_id, type, time, date=None, days_of_week=None, interval_min=1, active=True, name=None):
     return supabase.table("reminders").insert({
         "user_id": user_id,
         "type": type,
@@ -36,7 +33,9 @@ def create_reminder(user_id, type, time, date=None, days_of_week=None, interval_
         "date": date,
         "days_of_week": days_of_week,
         "interval_min": interval_min,
-        "active": active
+        "active": active,
+        "name": name,             # поддержка имени
+        "confirmed": False        # при создании всегда False
     }).execute()
 
 def get_reminders(user_id=None):
@@ -45,11 +44,19 @@ def get_reminders(user_id=None):
         q = q.eq("user_id", user_id)
     return q.execute().data
 
+def get_reminders_by_user(user_id):
+    data = supabase.table("reminders").select("*").eq("user_id", user_id).eq("active", True).execute()
+    return data.data if data.data else []
+
 def update_reminder(reminder_id, **fields):
     return supabase.table("reminders").update(fields).eq("id", reminder_id).execute()
 
 def delete_reminder(reminder_id):
     return supabase.table("reminders").delete().eq("id", reminder_id).execute()
+
+def confirm_reminder(reminder_id):
+    # Отметить напоминание как подтверждённое
+    supabase.table("reminders").update({"confirmed": True}).eq("id", reminder_id).execute()
 
 # SCREENSHOTS
 
