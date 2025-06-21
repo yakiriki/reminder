@@ -6,6 +6,8 @@ from config import Config
 
 async def reminder_scheduler(bot: Bot):
     while True:
+        from datetime import datetime
+        print(f"[DEBUG] Время сервера: {datetime.now()}")
         now = datetime.utcnow()
         reminders = get_reminders()
         for rem in reminders:
