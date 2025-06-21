@@ -1,7 +1,7 @@
 import asyncio
 from datetime import datetime
 from zoneinfo import ZoneInfo
-from db import get_reminders, update_reminder
+from db import get_reminders
 
 KYIV_TZ = ZoneInfo("Europe/Kyiv")
 
@@ -14,9 +14,9 @@ async def reminder_scheduler(bot):
             if not rem.get("active", True) or rem.get("confirmed", False):
                 continue
 
-            msg = f"⏰ Напоминание: {rem.get('name', '(без имени)')}\nНе забудьте отправить скриншот."
+            # Имя напоминания в сообщении
+            msg = f"⏰ Напоминание: {rem.get('name', 'Без имени')}\nНе забудьте отправить скриншот."
 
-            # WEEKLY
             if rem["type"] == "weekly":
                 days = [int(d) for d in rem.get("days_of_week", [])]
                 rem_time = datetime.strptime(rem["time"], "%H:%M:%S").time()
@@ -26,7 +26,6 @@ async def reminder_scheduler(bot):
                     except Exception as e:
                         print(f"Ошибка при отправке напоминания: {e}")
 
-            # DATE (one-time, но повторяет, пока не подтвердите)
             if rem["type"] == "date":
                 if str(now.date()) == str(rem.get("date")):
                     rem_time = datetime.strptime(rem["time"], "%H:%M:%S").time()
