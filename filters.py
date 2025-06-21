@@ -1,6 +1,6 @@
+from db import get_user, add_user
 from aiogram import BaseMiddleware
 from aiogram.types import Message
-from db import get_user
 from config import Config
 
 class WhitelistMiddleware(BaseMiddleware):
