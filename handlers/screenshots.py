@@ -27,3 +27,15 @@ async def handle_image_doc(message: types.Message):
         await message.answer(f"✅ Скриншот сохранён!\n[Посмотреть]({public_url})", parse_mode="Markdown")
     else:
         await message.answer("Ошибка загрузки скриншота.")
+        from db import get_reminders_by_user, confirm_reminder
+from aiogram import Router
+
+router = Router()
+
+@router.message()
+async def any_message(message):
+    reminders = get_reminders_by_user(message.from_user.id)
+    for rem in reminders:
+        if not rem.get("confirmed", False):
+            confirm_reminder(rem["id"])
+            await message.answer(f"✅ Напоминание '{rem.get('name', '(без имени)')}' подтверждено!")
