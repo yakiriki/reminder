@@ -1,5 +1,5 @@
 import asyncio
-from datetime import datetime
+from datetime import datetime, date
 from zoneinfo import ZoneInfo
 from db import get_reminders
 
@@ -14,24 +14,30 @@ async def reminder_scheduler(bot):
             if not rem.get("active", True) or rem.get("confirmed", False):
                 continue
 
-            # Имя напоминания в сообщении
             msg = f"⏰ Напоминание: {rem.get('name', 'Без имени')}\nНе забудьте отправить скриншот."
 
             if rem["type"] == "weekly":
                 days = [int(d) for d in rem.get("days_of_week", [])]
                 rem_time = datetime.strptime(rem["time"], "%H:%M:%S").time()
-                if now.weekday() in days and rem_time.hour == now.hour and rem_time.minute == now.minute:
-                    try:
-                        await bot.send_message(rem["user_id"], msg)
-                    except Exception as e:
-                        print(f"Ошибка при отправке напоминания: {e}")
-
-            if rem["type"] == "date":
-                if str(now.date()) == str(rem.get("date")):
-                    rem_time = datetime.strptime(rem["time"], "%H:%M:%S").time()
-                    if rem_time.hour == now.hour and rem_time.minute == now.minute:
+                # если сегодня нужный день, и время уже наступило — шлём каждую минуту до подтверждения
+                if now.weekday() in days:
+                    rem_dt = now.replace(hour=rem_time.hour, minute=rem_time.minute, second=0, microsecond=0)
+                    if now >= rem_dt:
                         try:
                             await bot.send_message(rem["user_id"], msg)
                         except Exception as e:
                             print(f"Ошибка при отправке напоминания: {e}")
+
+            if rem["type"] == "date":
+                # если дата совпадает и время уже наступило — шлём каждую минуту до подтверждения
+                rem_date = rem.get("date")
+                if str(now.date()) == str(rem_date):
+                    rem_time = datetime.strptime(rem["time"], "%H:%M:%S").time()
+                    rem_dt = datetime.combine(now.date(), rem_time, tzinfo=KYIV_TZ)
+                    if now >= rem_dt:
+                        try:
+                            await bot.send_message(rem["user_id"], msg)
+                        except Exception as e:
+                            print(f"Ошибка при отправке напоминания: {e}")
+
         await asyncio.sleep(60)
