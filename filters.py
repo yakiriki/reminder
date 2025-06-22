@@ -1,6 +1,6 @@
 from aiogram import BaseMiddleware
 from aiogram.types import Message
-from db import get_user, add_user  # <-- обязательно импортируй add_user!
+from db import get_user, add_user
 from config import Config
 
 class WhitelistMiddleware(BaseMiddleware):
@@ -17,5 +17,5 @@ class WhitelistMiddleware(BaseMiddleware):
         # Остальные только если есть в базе
         if not user:
             await event.answer("Доступ запрещён. Обратитесь к администратору.")
-            return
+            return None      # <--- ЯВНОЕ ЗАВЕРШЕНИЕ CHAIN
         return await handler(event, data)
