@@ -6,15 +6,17 @@ router = Router()
 
 @router.message(Command("reminder_add"))
 async def reminder_add_help(message: types.Message):
-    await message.answer(
-        "Добавить напоминание:\n"
-        "Формат:\n"
-        "/reminder_add weekly <HH:MM> <дни недели через запятую (0=Пн,..6=Вс)> <имя>\n"
-        "/reminder_add date <HH:MM> <YYYY-MM-DD> <имя>\n"
-        "Примеры:\n"
-        "/reminder_add weekly 10:00 1,3,5 Утренняя проверка\n"
-        "/reminder_add date 14:15 2025-06-21 День рождения"
-    )
+    if len(message.text.strip().split()) == 1:
+        await message.answer(
+            "Добавить напоминание:\n"
+            "Формат:\n"
+            "/reminder_add weekly <HH:MM> <дни недели через запятую (0=Пн,..6=Вс)> <имя>\n"
+            "/reminder_add date <HH:MM> <YYYY-MM-DD> <имя>\n"
+            "Примеры:\n"
+            "/reminder_add weekly 10:00 1,3,5 Утренняя проверка\n"
+            "/reminder_add date 14:15 2025-06-21 День рождения"
+        )
+        return
 
 @router.message(lambda m: m.text and m.text.startswith("/reminder_add ") and len(m.text.strip().split()) >= 5)
 async def handle_reminder_add(message: types.Message):
@@ -22,6 +24,9 @@ async def handle_reminder_add(message: types.Message):
         args = message.text.strip().split(maxsplit=4)
         _, typ, time_val, param, name = args
         user_id = message.from_user.id
+
+        # поддержка имен с пробелами
+        name = name.strip()
 
         if typ.lower() == "weekly":
             days_of_week = [d.strip() for d in param.split(',')]
