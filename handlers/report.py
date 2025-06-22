@@ -10,7 +10,6 @@ def format_report(screens):
         return "Нет скриншотов за выбранный период."
     txt = "Скриншоты:\n"
     for item in screens:
-        # HTML форматирование ссылки, чтобы не было проблем с parse_mode
         txt += f'- {item["added_at"][:19]}: <a href="{item["file_url"]}">ссылка</a>\n'
     return txt
 
@@ -21,10 +20,7 @@ async def report_day(message: types.Message):
         now = datetime.utcnow()
         date_from = now.replace(hour=0, minute=0, second=0, microsecond=0).isoformat()
         date_to = now.isoformat()
-        # Если get_screenshots асинхронная функция — нужен await!
-        screens = get_screenshots(user_id=message.from_user.id, date_from=date_from, date_to=date_to)
-        if hasattr(screens, "__await__"):
-            screens = await screens
+        screens = await get_screenshots(user_id=message.from_user.id, date_from=date_from, date_to=date_to)
         await message.answer(format_report(screens), parse_mode="HTML")
     except Exception as e:
         print("Ошибка в /report_day:", e)
@@ -37,9 +33,7 @@ async def report_week(message: types.Message):
         now = datetime.utcnow()
         date_from = (now - timedelta(days=7)).isoformat()
         date_to = now.isoformat()
-        screens = get_screenshots(user_id=message.from_user.id, date_from=date_from, date_to=date_to)
-        if hasattr(screens, "__await__"):
-            screens = await screens
+        screens = await get_screenshots(user_id=message.from_user.id, date_from=date_from, date_to=date_to)
         await message.answer(format_report(screens), parse_mode="HTML")
     except Exception as e:
         print("Ошибка в /report_week:", e)
@@ -52,9 +46,7 @@ async def report_month(message: types.Message):
         now = datetime.utcnow()
         date_from = (now - timedelta(days=30)).isoformat()
         date_to = now.isoformat()
-        screens = get_screenshots(user_id=message.from_user.id, date_from=date_from, date_to=date_to)
-        if hasattr(screens, "__await__"):
-            screens = await screens
+        screens = await get_screenshots(user_id=message.from_user.id, date_from=date_from, date_to=date_to)
         await message.answer(format_report(screens), parse_mode="HTML")
     except Exception as e:
         print("Ошибка в /report_month:", e)
@@ -64,9 +56,7 @@ async def report_month(message: types.Message):
 async def report_use(message: types.Message):
     print("/report_use сработал")
     try:
-        screens = get_screenshots(user_id=message.from_user.id)
-        if hasattr(screens, "__await__"):
-            screens = await screens
+        screens = await get_screenshots(user_id=message.from_user.id)
         await message.answer(format_report(screens), parse_mode="HTML")
     except Exception as e:
         print("Ошибка в /report_use:", e)
@@ -82,9 +72,7 @@ async def report_user(message: types.Message):
     if len(parts) == 4:
         try:
             _, user_id, date_from, date_to = parts
-            screens = get_screenshots(user_id=int(user_id), date_from=date_from, date_to=date_to)
-            if hasattr(screens, "__await__"):
-                screens = await screens
+            screens = await get_screenshots(user_id=int(user_id), date_from=date_from, date_to=date_to)
             await message.answer(format_report(screens), parse_mode="HTML")
         except Exception as e:
             print("Ошибка в /report_user:", e)
