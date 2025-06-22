@@ -4,19 +4,19 @@ from db import create_reminder, delete_reminder, update_reminder, get_reminders_
 
 router = Router()
 
-@router.message(Command("reminder_add"))
+# ИСПРАВЛЕННЫЙ ДЕКОРАТОР: только если команда без аргументов!
+@router.message(lambda m: m.text and m.text.strip() == "/reminder_add")
 async def reminder_add_help(message: types.Message):
-    if len(message.text.strip().split()) == 1:
-        await message.answer(
-            "Добавить напоминание:\n"
-            "Формат:\n"
-            "/reminder_add weekly <HH:MM> <дни недели через запятую (0=Пн,..6=Вс)> <имя>\n"
-            "/reminder_add date <HH:MM> <YYYY-MM-DD> <имя>\n"
-            "Примеры:\n"
-            "/reminder_add weekly 10:00 1,3,5 Утренняя проверка\n"
-            "/reminder_add date 14:15 2025-06-21 День рождения"
-        )
-        return
+    await message.answer(
+        "Добавить напоминание:\n"
+        "Формат:\n"
+        "/reminder_add weekly <HH:MM> <дни недели через запятую (0=Пн,..6=Вс)> <имя>\n"
+        "/reminder_add date <HH:MM> <YYYY-MM-DD> <имя>\n"
+        "Примеры:\n"
+        "/reminder_add weekly 10:00 1,3,5 Утренняя проверка\n"
+        "/reminder_add date 14:15 2025-06-21 День рождения"
+    )
+    return
 
 @router.message(lambda m: m.text and m.text.startswith("/reminder_add ") and len(m.text.strip().split()) >= 5)
 async def handle_reminder_add(message: types.Message):
