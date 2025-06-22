@@ -1,10 +1,9 @@
 from aiogram import Router, types
 from db import add_user, remove_user, list_users, get_stats
 from config import Config
+from aiogram.filters import Command
 
 router = Router()
-
-from aiogram.filters import Command
 
 @router.message(Command("adduser"))
 async def add_user_cmd(message: types.Message):
@@ -29,17 +28,17 @@ async def handle_add_remove(message: types.Message):
         user_id = message.reply_to_message.from_user.id
         username = message.reply_to_message.from_user.username or "unknown"
         if message.text.startswith("/adduser"):
-            add_user(user_id, username)
+            await add_user(user_id, username)
             await message.answer("Пользователь добавлен!")
         elif message.text.startswith("/removeuser"):
-            remove_user(user_id)
+            await remove_user(user_id)
             await message.answer("Пользователь удалён!")
     except Exception as e:
         await message.answer(f"Ошибка: {e}")
 
 @router.message(Command("listusers"))
 async def list_users_cmd(message: types.Message):
-    users = list_users()
+    users = await list_users()
     if not users:
         await message.answer("Нет разрешённых пользователей.")
         return
@@ -50,7 +49,7 @@ async def list_users_cmd(message: types.Message):
 
 @router.message(Command("debug"))
 async def debug_cmd(message: types.Message):
-    stats = get_stats()
+    stats = await get_stats()
     await message.answer(
         f"Статистика:\n"
         f"- Сохранено скриншотов: {stats['screenshots']}\n"
