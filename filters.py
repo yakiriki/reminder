@@ -8,11 +8,11 @@ class WhitelistMiddleware(BaseMiddleware):
         user_id = event.from_user.id if hasattr(event, "from_user") else None
         if not user_id:
             return await handler(event, data)
-        user = get_user(user_id)
+        user = await get_user(user_id)
         # Первый запуск — только админ
         if user_id == Config.ADMIN_USER_ID:
             if not user:
-                get_user(user_id) or add_user(user_id, event.from_user.username, True)
+                await get_user(user_id) or await add_user(user_id, event.from_user.username, True)
             return await handler(event, data)
         # Остальные только если есть в базе
         if not user:
